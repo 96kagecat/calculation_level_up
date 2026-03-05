@@ -19,27 +19,8 @@
     <br>
     <button id="calcBtn" onclick="calculate()">計算</button>
     <div class="result" id="output"></div>
-    
-    <script>
-      function calculate() {
-        const btn = document.getElementById('calcBtn');
-        btn.disabled = true; // ボタンを非活性化
 
-        const up = Number(document.getElementById('up').value);
-        const now = Number(document.getElementById('now').value);
-        const perHour = Number(document.getElementById('perHour').value);
-
-        if (!up || !now || !perHour || perHour <= 0) {
-          document.getElementById('output').textContent = '全て正しい値を入力してください';
-          btn.disabled = false; // 入力エラー時はすぐ有効化
-          return;
-        }
-        google.script.run.withSuccessHandler(function(res){
-          document.getElementById('output').innerHTML = 
-            `LvUPまでの時間: <span style="color:blue">${res.duration}</span><br>LvUP時刻: <span style="color:green">${res.lvupTime}</span>`;
-          btn.disabled = false; // 終了後にボタン有効化
-        }).calcLvUp(up, now, perHour);
-      }
-    </script>
+    <!-- 外部JSファイルを読み込む -->
+    <script src="calculation.js"></script>
   </body>
 </html>
