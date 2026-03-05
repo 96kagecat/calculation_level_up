@@ -1,58 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>LvUP時刻計算ツール</title>
     <base target="_top">
     <style>
-      body { font-family: Arial; padding: 24px; }
-      label { display:block; margin-top:12px;}
-      input[type="number"]{width:100px;}
-      .result{margin-top:20px;font-weight:bold;}
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* 画面の高さいっぱい */
+            overflow: hidden;
+            background-color: #f0f2f5;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: #fff;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        /* メインコンテンツエリア（スクロール可能） */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* タッチしやすいボタン要素 */
+        .btn {
+            display: block;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+
+        /* フォームグループ全体 */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        /* ラベル（上に表示） */
+        .form-group label {
+            display: block;
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 6px;
+            font-weight: 500;
+            letter-spacing: .03em;
+        }
+
+        /* 入力欄本体 */
+        .input-field {
+            width: 80%;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 1.5px solid #cfd8dc;
+            border-radius: 7px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color .2s;
+            background: #fff;
+            outline: none;
+        }
+
+        /* フォーカス時の強調 */
+        .input-field:focus {
+            border-color: #007bff;
+            background: #f4faff;
+        }
     </style>
   </head>
   <body>
-    <h2>LvUP時刻計算ツール</h2>
-    <label>LvUPに必要な全体の経験値<br><input type="number" id="up">&nbsp;M</label>
-    <label>現在の経験値
-      <br><input type="number" id="now">&nbsp;M</label>
-    <label>経験値1時間あたりの産出量
-      <br><input type="number" id="perHour"></label>
-    <br>
-    <button id="calcBtn" onclick="calculate()">計算</button>
-    <div class="result" id="output"></div>
+    <header>
+      LvUP時刻計算ツール
+    </header>
+
+    <div class="content">
+      <form>
+        <div class="form-group">
+          <label for="up">LvUPに必要な全体の経験値</label>
+          <input class="input-field"  type="number" id="up">&nbsp;M
+        </div>
+        <div class="form-group">
+          <label for="now">現在の経験値</label>
+          <input class="input-field"  type="number" id="now">&nbsp;M
+        </div>
+        <div class="form-group">
+          <label for="perHour">経験値1時間あたりの産出量</label>
+          <input class="input-field"  type="number" id="perHour">
+        </div>
+        <div class="form-group">
+          <div class="btn" id="calcBtn" onclick="calculate()">計算</div>
+        </div>
+      </form>
+
+      <h3>計算結果</h3>
+      <form>
+        <div id="error" style="color:red; font-weight: bold"></div>
+        <div class="form-group">
+          <label for="up">LvUPまでの時間</label>
+          <div id="rslt_time_remaining" style="font-size: 18px;">---</div>
+        </div>
+        <div class="form-group">
+          <label for="now">LvUP時刻</label>
+          <div id="rslt_datetime" style="font-size: 18px;">---</div>
+
+        </div>
+      </form>
+      <div class="result" id="output"></div>
+    </div>
 
     <script>
       function pad(n) {
         return n.toString().padStart(2, '0');
       }
-      
+
       function calculate() {
         const btn = document.getElementById('calcBtn');
         btn.disabled = true;
-      
+
         const up = Number(document.getElementById('up').value);
         const now = Number(document.getElementById('now').value);
         const perHour = Number(document.getElementById('perHour').value);
-      
+
         if (!up || !now || !perHour || perHour <= 0) {
-          document.getElementById('output').textContent = '全て正しい値を入力してください';
+          document.getElementById('error').textContent = '正しい値を入力してください';
+          document.getElementById('rslt_time_remaining').textContent = '---';
+          document.getElementById('rslt_datetime').textContent = '---';
           btn.disabled = false;
           return;
         }
-      
+
         // 1. 1,000,000倍換算
         const upValue = up * 1000000;
         const nowValue = now * 1000000;
-      
+
         // 2. 残り時間（小数時間）
         const diff = upValue - nowValue;
         if (diff <= 0) {
-          document.getElementById('output').innerHTML =
-            `LvUPまでの時間: <span style="color:blue">既に到達しています</span><br>LvUP時刻: <span style="color:green">-</span>`;
+          document.getElementById('error').textContent = '既にLvUP時刻に到達しています';
+          document.getElementById('rslt_time_remaining').textContent = '---';
+          document.getElementById('rslt_datetime').textContent = '---';
           btn.disabled = false;
           return;
         }
         const hoursLeft = diff / perHour;
-      
+
         // 3. 小数時間 → hh:mm 形式
         const h = Math.floor(hoursLeft);
         const m = Math.ceil((hoursLeft - h) * 60);
@@ -64,19 +173,19 @@
           realM = 0;
         }
         const durationStr = `${realH}時間${realM}分`;
-        
+
         // 4. LvUP時刻計算
         const nowDate = new Date();
         nowDate.setHours(nowDate.getHours() + h);
         nowDate.setMinutes(nowDate.getMinutes() + m);
-      
+
         const lvupTime = `${nowDate.getFullYear()}/${pad(nowDate.getMonth()+1)}/${pad(nowDate.getDate())} ${pad(nowDate.getHours())}:${pad(nowDate.getMinutes())}`;
-      
-        document.getElementById('output').innerHTML =
-          `LvUPまでの時間: <span style="color:blue">${durationStr}</span><br>LvUP時刻: <span style="color:green">${lvupTime}</span>`;
-      
+
+        document.getElementById('error').textContent = '';
+        document.getElementById('rslt_time_remaining').innerHTML = `<span style="color:blue; font-weight: bold">${durationStr}</span>`;
+        document.getElementById('rslt_datetime').innerHTML = `<span style="color:green; font-weight: bold">${lvupTime}</span>`;
         btn.disabled = false;
-      }   
+      }
     </script>
   </body>
 </html>
