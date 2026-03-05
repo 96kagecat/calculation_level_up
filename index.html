@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: Arial; padding: 24px; }
+      label { display:block; margin-top:12px;}
+      input[type="number"]{width:100px;}
+      .result{margin-top:20px;font-weight:bold;}
+    </style>
+  </head>
+  <body>
+    <h2>LvUP時刻計算ツール</h2>
+    <label>LvUPに必要な全体の経験値<br><input type="number" id="up">&nbsp;M</label>
+    <label>現在の経験値
+      <br><input type="number" id="now">&nbsp;M</label>
+    <label>経験値1時間あたりの産出量
+      <br><input type="number" id="perHour"></label>
+    <br>
+    <button id="calcBtn" onclick="calculate()">計算</button>
+    <div class="result" id="output"></div>
+    
+    <script>
+      function calculate() {
+        const btn = document.getElementById('calcBtn');
+        btn.disabled = true; // ボタンを非活性化
+
+        const up = Number(document.getElementById('up').value);
+        const now = Number(document.getElementById('now').value);
+        const perHour = Number(document.getElementById('perHour').value);
+
+        if (!up || !now || !perHour || perHour <= 0) {
+          document.getElementById('output').textContent = '全て正しい値を入力してください';
+          btn.disabled = false; // 入力エラー時はすぐ有効化
+          return;
+        }
+        google.script.run.withSuccessHandler(function(res){
+          document.getElementById('output').innerHTML = 
+            `LvUPまでの時間: <span style="color:blue">${res.duration}</span><br>LvUP時刻: <span style="color:green">${res.lvupTime}</span>`;
+          btn.disabled = false; // 終了後にボタン有効化
+        }).calcLvUp(up, now, perHour);
+      }
+    </script>
+  </body>
+</html>
