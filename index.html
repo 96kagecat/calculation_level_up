@@ -191,7 +191,26 @@
         }
 
         const upValue = up * 1000000;
-        const nowValue = now * 1000000;
+        let nowValue = now * 1000000;
+
+        // 無料加速
+        if (document.getElementById('early2h').checked) {
+          // 2時間分の経験値を加算
+          nowValue += perHour * 2;
+        }
+
+        // 加速石
+        const useStone = document.getElementById('useStone').checked;
+        let stoneCount = 0;
+        if (useStone) {
+          stoneCount = Number(document.getElementById('stoneCount').value);
+          if (isNaN(stoneCount) || stoneCount < 1) {
+            setResultMessages('個数を正しく入力してください');
+            return;
+          }
+          // 個数分の2時間分経験値を加算
+          nowValue += perHour * 2 * stoneCount;
+        }
 
         // LvUP到達済み判定
         if (upValue <= nowValue) {
@@ -202,22 +221,6 @@
         const diff = upValue - nowValue;
         const hoursLeft = diff / perHour;
         let totalMinutes = Math.ceil(hoursLeft * 60);
-
-        // 無料加速
-        if (document.getElementById('early2h').checked) {
-          totalMinutes -= 120;
-        }
-        // 加速石
-        const useStone = document.getElementById('useStone').checked;
-        let stoneCount = 0;
-        if (useStone) {
-          stoneCount = Number(document.getElementById('stoneCount').value);
-          if (isNaN(stoneCount) || stoneCount < 1) {
-            setResultMessages('個数を正しく入力してください');
-            return;
-          }
-          totalMinutes -= 120 * stoneCount;
-        }
 
         if (totalMinutes < 0) totalMinutes = 0;
 
