@@ -214,7 +214,11 @@
 
         // LvUP到達済み判定
         if (upValue <= nowValue) {
-          setResultMessages('既にLvUP時刻に到達しています');
+          setResultMessages(
+            '',
+            '<span style="color:blue; font-weight: bold">0時間0分</span>',
+            '<span style="color:green; font-weight: bold">既にLvUP時刻に到達しています</span>'
+          );
           return;
         }
 
