@@ -76,6 +76,26 @@
             border-color: #007bff;
             background: #f4faff;
         }
+        input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+          accent-color: #007bff;
+          margin-right: 6px;
+          vertical-align: middle;
+          cursor: pointer;
+        }
+        input[type="checkbox"]:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .input-field:disabled {
+          background: #e9ecef !important;
+          color: #a0a4aa !important;
+          border-color: #cfd8dc;
+          cursor: not-allowed;
+          opacity: 1;
+        }
     </style>
   </head>
   <body>
@@ -97,6 +117,22 @@
           <label for="perHour">経験値1時間あたりの産出量</label>
           <input class="input-field"  type="number" id="perHour" min="1">
         </div>
+
+        <div class="form-group" style="display: flex; align-items: center;">
+          <label for="early2h" style="margin-bottom:0; display:flex; align-items:center;">
+            <input type="checkbox" id="early2h">
+            無料加速を行う
+          </label>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center;">
+          <label for="useStone" style="margin-bottom:0; display:flex; align-items:center;">
+            <input type="checkbox" id="useStone" onchange="toggleStoneInput()">
+            加速石を使用する
+          </label>
+          <input class="input-field" type="number" id="stoneCount" min="1" value="1"
+                style="width: 65px; margin-left:10px;" disabled>&nbsp;個
+        </div>
+
         <div class="form-group">
           <div class="btn" id="calcBtn" onclick="calculate()">計算</div>
         </div>
@@ -122,6 +158,19 @@
         return n.toString().padStart(2, '0');
       }
 
+      function toggleStoneInput() {
+        const useStone = document.getElementById('useStone').checked;
+        document.getElementById('stoneCount').disabled = !useStone;
+      }
+
+      function setResultMessages(errorMsg, timeMsg, datetimeMsg) {
+          document.getElementById('error').textContent = errorMsg || '';
+          document.getElementById('rslt_time_remaining').innerHTML =
+            timeMsg !== undefined ? timeMsg : '---';
+          document.getElementById('rslt_datetime').innerHTML =
+            datetimeMsg !== undefined ? datetimeMsg : '---';
+      }
+
       function calculate() {
         const upStr = document.getElementById('up').value;
         const nowStr = document.getElementById('now').value;
@@ -137,9 +186,7 @@
           nowStr === '' || isNaN(now) ||
           !perHourStr || isNaN(perHour) || perHour <= 0
         ) {
-          document.getElementById('error').textContent = '正しい値を入力してください';
-          document.getElementById('rslt_time_remaining').textContent = '---';
-          document.getElementById('rslt_datetime').textContent = '---';
+          setResultMessages('正しい値を入力してください');
           return;
         }
 
@@ -148,24 +195,34 @@
 
         // LvUP到達済み判定
         if (upValue <= nowValue) {
-          document.getElementById('error').textContent = '既にLvUP時刻に到達しています';
-          document.getElementById('rslt_time_remaining').textContent = '---';
-          document.getElementById('rslt_datetime').textContent = '---';
+          setResultMessages('既にLvUP時刻に到達しています');
           return;
         }
 
         const diff = upValue - nowValue;
         const hoursLeft = diff / perHour;
+        let totalMinutes = Math.ceil(hoursLeft * 60);
 
-        const h = Math.floor(hoursLeft);
-        const m = Math.ceil((hoursLeft - h) * 60);
-        // 分が60の場合は繰り上げ
-        let realH = h;
-        let realM = m;
-        if (realM === 60) {
-          realH += 1;
-          realM = 0;
+        // 無料加速
+        if (document.getElementById('early2h').checked) {
+          totalMinutes -= 120;
         }
+        // 加速石
+        const useStone = document.getElementById('useStone').checked;
+        let stoneCount = 0;
+        if (useStone) {
+          stoneCount = Number(document.getElementById('stoneCount').value);
+          if (isNaN(stoneCount) || stoneCount < 1) {
+            setResultMessages('個数を正しく入力してください');
+            return;
+          }
+          totalMinutes -= 120 * stoneCount;
+        }
+
+        if (totalMinutes < 0) totalMinutes = 0;
+
+        const realH = Math.floor(totalMinutes / 60);
+        const realM = totalMinutes % 60;
         const durationStr = `${realH}時間${realM}分`;
 
         const nowDate = new Date();
@@ -174,9 +231,11 @@
 
         const lvupTime = `${nowDate.getFullYear()}/${pad(nowDate.getMonth()+1)}/${pad(nowDate.getDate())} ${pad(nowDate.getHours())}:${pad(nowDate.getMinutes())}`;
 
-        document.getElementById('error').textContent = '';
-        document.getElementById('rslt_time_remaining').innerHTML = `<span style="color:blue; font-weight: bold">${durationStr}</span>`;
-        document.getElementById('rslt_datetime').innerHTML = `<span style="color:green; font-weight: bold">${lvupTime}</span>`;
+        setResultMessages(
+          '',
+          `<span style="color:blue; font-weight: bold">${durationStr}</span>`,
+          `<span style="color:green; font-weight: bold">${lvupTime}</span>`
+        );
       }
     </script>
   </body>
