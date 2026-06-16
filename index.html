@@ -96,6 +96,30 @@
           cursor: not-allowed;
           opacity: 1;
         }
+
+        .segmented-control {
+          display: inline-flex;
+          border-radius: 5px;
+          overflow: hidden;
+          border: 1px solid #007bff;
+          margin-bottom: 6px;
+        }
+        .segmented-control label {
+          padding: 6px 18px;
+          background: #fff;
+          color: #007bff;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.2s, color 0.2s;
+          margin-bottom: 0px;
+        }
+        .segmented-control input:checked + label {
+          background: #007bff;
+          color: #fff;
+        }
+        .segmented-control input {
+          display: none;
+        }
     </style>
   </head>
   <body>
@@ -107,15 +131,30 @@
       <div>
         <div class="form-group">
           <label for="up">LvUPに必要な全体の経験値</label>
-          <input class="input-field"  type="number" id="up" min="0">&nbsp;M
+          <input class="input-field" type="number" id="up" min="0" step="0.1" placeholder="例: 1.23">&nbsp;B
         </div>
         <div class="form-group">
-          <label for="now">現在の経験値</label>
-          <input class="input-field"  type="number" id="now" min="0">&nbsp;M
+          <label>現在の経験値</label>
+          <div class="segmented-control">
+            <input type="radio" name="nowUnit" id="nowUnitM" value="M" checked onchange="toggleNowInput()">
+            <label for="nowUnitM">M</label>
+            <input type="radio" name="nowUnit" id="nowUnitB" value="B" onchange="toggleNowInput()">
+            <label for="nowUnitB">B</label>
+          </div>
+          <div>
+            <div class="now-input-wrap" id="now-input-m-wrap">
+              <input class="input-field" type="number" id="nowM" min="0" placeholder="例: 123">
+              <span>M</span>
+            </div>
+            <div class="now-input-wrap" id="now-input-b-wrap" style="display:none;">
+              <input class="input-field" type="number" id="nowB" min="0" placeholder="例: 1.23">
+              <span>B</span>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label for="perHour">経験値1時間あたりの産出量</label>
-          <input class="input-field"  type="number" id="perHour" min="1">
+          <input class="input-field"  type="number" id="perHour" min="1" placeholder="例: 123456789">
         </div>
 
         <div class="form-group" style="display: flex; align-items: center;">
@@ -171,27 +210,47 @@
             datetimeMsg !== undefined ? datetimeMsg : '---';
       }
 
+      // M/B切替UI制御
+      function toggleNowInput() {
+        const unit = document.querySelector('input[name="nowUnit"]:checked').value;
+        document.getElementById('now-input-m-wrap').style.display = (unit === 'M') ? '' : 'none';
+        document.getElementById('now-input-b-wrap').style.display = (unit === 'B') ? '' : 'none';
+      }
+
       function calculate() {
         const upStr = document.getElementById('up').value;
-        const nowStr = document.getElementById('now').value;
         const perHourStr = document.getElementById('perHour').value;
 
         const up = Number(upStr);
-        const now = Number(nowStr);
         const perHour = Number(perHourStr);
+
+        const nowUnit = document.querySelector('input[name="nowUnit"]:checked').value;
+        let nowValue = 0;
+        let nowRawStr = '';
+        if (nowUnit === 'M') {
+          nowRawStr = document.getElementById('nowM').value;
+          if (nowRawStr === '' || isNaN(Number(nowRawStr)) || Number(nowRawStr) < 0) {
+            setResultMessages('現在の経験値(M)を正しく入力してください');
+            return;
+          }
+          nowValue = Number(nowRawStr) * 1_000_000;
+        } else { // B単位
+          nowRawStr = document.getElementById('nowB').value;
+          if (nowRawStr === '' || isNaN(Number(nowRawStr)) || Number(nowRawStr) < 0) {
+            setResultMessages('現在の経験値(B)を正しく入力してください');
+            return;
+          }
+          nowValue = Number(nowRawStr) * 1_000_000_000;
+        }
 
         // 入力値チェック
         if (
           !upStr || isNaN(up) || up <= 0 ||
-          nowStr === '' || isNaN(now) ||
           !perHourStr || isNaN(perHour) || perHour <= 0
         ) {
           setResultMessages('正しい値を入力してください');
           return;
         }
-
-        const upValue = up * 1000000;
-        let nowValue = now * 1000000;
 
         // 無料加速
         if (document.getElementById('early2h').checked) {
@@ -212,6 +271,7 @@
           nowValue += perHour * 2 * stoneCount;
         }
 
+        const upValue = up * 1_000_000_000;
         // LvUP到達済み判定
         if (upValue <= nowValue) {
           setResultMessages(
