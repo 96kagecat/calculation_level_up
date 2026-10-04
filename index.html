@@ -191,8 +191,14 @@
       </div>
       <div class="result" id="output"></div>
     </div>
+    <footer>
+      <p>&copy; <span id="current-year"></span> カゲネコ @96kagecat</p>
+    </footer>
 
     <script>
+      // 画面が読み込まれたら、現在の西暦を自動で挿入する
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+      
       function pad(n) {
         return n.toString().padStart(2, '0');
       }
